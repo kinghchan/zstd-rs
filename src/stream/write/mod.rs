@@ -1,4 +1,5 @@
 //! Implement push-based [`Write`] trait for both compressing and decompressing.
+use std::convert::TryInto;
 use std::io::{self, Write};
 
 use zstd_safe;
@@ -190,6 +191,12 @@ impl<W: Write> Encoder<'static, W> {
         let writer = zio::Writer::new(writer, encoder);
         Ok(Encoder { writer })
     }
+
+    // ivan chan
+    // Need to get the bytes written.
+    pub fn get_bytes_written(&self) -> usize {
+        self.writer.bytes_written.try_into().unwrap()
+    }
 }
 
 impl<'a, W: Write> Encoder<'a, W> {
@@ -259,6 +266,13 @@ impl<'a, W: Write> Encoder<'a, W> {
         self.try_finish().map_err(|(_, err)| err)
     }
 
+    // ivan chan
+    // I just need to be able to return the bloody encoder so I can get the bytes written.
+    pub fn finish_and_return_self(self) -> Self {
+        let encoder = self.try_finish_return_self();
+        encoder
+    }
+
     /// **Required**: Attempts to finish the stream.
     ///
     /// You *need* to finish the stream when you're done writing, either with
@@ -274,6 +288,16 @@ impl<'a, W: Write> Encoder<'a, W> {
             // Return the writer, because why not
             Ok(()) => Ok(self.writer.into_inner().0),
             Err(e) => Err((self, e)),
+        }
+    }
+
+    pub fn try_finish_return_self(mut self) -> Self {
+        match self.writer.finish() {
+            // Return the writer, because why not
+            Ok(()) => {
+                self
+            },
+            Err(e) => panic!("error"),
         }
     }
 

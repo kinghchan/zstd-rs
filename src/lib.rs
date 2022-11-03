@@ -18,7 +18,7 @@
 //! ```
 //!
 //! [zstd]: https://github.com/facebook/zstd
-#![deny(missing_docs)]
+// #![deny(missing_docs)]
 #![cfg_attr(feature = "doc-cfg", feature(doc_cfg))]
 
 // Re-export the zstd-safe crate.

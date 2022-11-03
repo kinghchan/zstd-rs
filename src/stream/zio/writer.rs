@@ -14,7 +14,10 @@ pub struct Writer<W, D> {
     writer: W,
     operation: D,
 
-    offset: usize,
+    // ivan chan
+    pub offset: usize,
+    pub bytes_written: usize,
+
     buffer: Vec<u8>,
 
     // When `true`, indicates that nothing should be added to the buffer.
@@ -36,6 +39,9 @@ where
         Writer {
             writer,
             operation,
+
+            // ivan chan
+            bytes_written: 0,
 
             offset: 0,
             // 32KB buffer? That's what flate2 uses
@@ -119,7 +125,12 @@ where
                         "writer will not accept any more data",
                     ))
                 }
-                Ok(n) => self.offset += n,
+                Ok(n) => {
+                    // ivan chan
+                    // write should return bytes written
+                    self.bytes_written += n;
+                    self.offset += n
+                },
                 Err(ref e) if e.kind() == io::ErrorKind::Interrupted => (),
                 Err(e) => return Err(e),
             }
@@ -181,6 +192,7 @@ where
         loop {
             // First, write any pending data from `self.buffer`.
             self.write_from_offset()?;
+
             // At this point `self.buffer` can safely be discarded.
 
             // Support writing concatenated frames by re-initializing the
